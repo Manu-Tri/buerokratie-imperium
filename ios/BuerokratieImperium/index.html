@@ -104,10 +104,11 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex San
 .btn:disabled{background:transparent;color:var(--muted);border-color:var(--line);cursor:default}
 .btn.ghost{background:transparent;color:var(--warn);border-color:var(--warn);font-weight:500;font-size:14px}
 
-.toasts{position:fixed;left:0;right:0;bottom:0;padding:0 16px calc(72px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:20}
-.toast{border-left:5px solid var(--tc,var(--stamp));max-width:520px;width:100%;background:var(--ink);color:var(--paper);padding:9px 12px;border-radius:4px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.25);animation:tin .25s ease-out,tout .45s ease-in 4.2s forwards}
-@keyframes tin{from{opacity:0;transform:translateY(10px)}}
-@keyframes tout{to{opacity:0;transform:translateY(10px)}}
+.toasts{position:fixed;left:0;right:0;top:0;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 0;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;z-index:20}
+.toast{display:flex;align-items:baseline;gap:7px;max-width:440px;background:rgba(35,36,43,.72);background:color-mix(in srgb,var(--ink) 72%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--paper);padding:5px 12px 5px 10px;border-radius:14px;font-size:12px;line-height:1.35;box-shadow:0 2px 8px rgba(0,0,0,.15);animation:tin .25s ease-out,tout .4s ease-in 2.7s forwards}
+.toast::before{content:"";flex:none;width:7px;height:7px;border-radius:4px;background:var(--tc,var(--stamp));transform:translateY(-1px)}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}}
+@keyframes tout{to{opacity:0;transform:translateY(-8px)}}
 
 .eilt{position:fixed;z-index:15;font-family:"Special Elite","Courier New",monospace;font-size:17px;background:var(--warn);color:#fff;border:0;padding:10px 14px;border-radius:3px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3);animation:wob .7s ease-in-out infinite alternate;touch-action:manipulation}
 @keyframes wob{from{transform:rotate(-5deg)}to{transform:rotate(5deg) scale(1.05)}}
@@ -850,9 +851,9 @@ const reformGain=()=>Math.floor(Math.sqrt(S.runTotal/1e6));
 
 function toast(msg,col){
   const el=document.createElement("div");el.className="toast";el.textContent=msg;if(col)el.style.setProperty("--tc",col);
-  const box=document.getElementById("toasts");box.appendChild(el);
-  while(box.children.length>3)box.firstChild.remove();
-  setTimeout(()=>el.remove(),4800);
+  const box=document.getElementById("toasts");box.prepend(el);
+  while(box.children.length>2)box.lastChild.remove();
+  setTimeout(()=>el.remove(),3200);
 }
 
 /* ---------- Auszeichnungen ---------- */
