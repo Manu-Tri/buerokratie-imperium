@@ -176,6 +176,19 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex San
 .sheet .sub{color:var(--muted);font-size:12.5px;margin:0 0 8px;text-align:center}
 .sheet .quote{font-style:italic;text-align:center;font-size:13px;margin:0 0 10px}
 .btnrow{display:flex;gap:8px}.btnrow .btn{flex:1}
+/* Amtsgebäude im Querschnitt: Etagen mit Paternoster */
+.tower{position:relative;padding-left:50px;background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:8px}
+.tower .shaft{position:absolute;left:0;top:0;bottom:0;width:50px;height:100%;pointer-events:none}
+.floor{--ac:var(--green);position:relative;border-top:3px solid color-mix(in srgb,var(--ink) 40%,var(--line))}
+.floor:first-of-type{border-top:0}
+.floor.person{cursor:pointer}
+.floor.person:active .fl-hd .meta{margin-top:1px}
+.fl-hd{background:color-mix(in srgb,var(--ac) 10%,var(--card))}
+.fl-hd .meta{margin-top:1px}
+.fl-hd{display:flex;gap:8px;align-items:center;padding:6px 8px 4px 10px;border-left:4px solid var(--ac)}
+.floor canvas{display:block;width:100%;height:86px}
+.floor.locked{padding:16px 12px 18px;border-left:0;background:repeating-linear-gradient(-45deg,transparent 0 10px,color-mix(in srgb,#e0b020 16%,transparent) 10px 20px)}
+.floor.locked h3{margin:0;font-size:14px;font-weight:600}.floor.locked p{margin:2px 0 0;font-size:12px;color:var(--muted)}
 .btn.alt{background:transparent;color:var(--ink);border-color:var(--line)}
 /* Landkarte und Dollar */
 :root{--ml:#d9e6bd;--mf:#8fb57a;--mw:#8ec5e6;--mr:#a88b5c}
@@ -259,6 +272,7 @@ details.odds summary{cursor:pointer;font-weight:600;padding:2px 0}
   <div class="ticker" id="ticker" data-views="amt"></div>
   <div class="goal" data-views="amt"><div class="gt"><b id="goalText"></b><span id="goalVal"></span></div><div class="bar"><i id="goalFill"></i></div></div>
 
+  <section id="staff" data-views="amt"></section>
   <nav class="tabs" role="tablist" data-views="amt">
     <button class="tab on" data-a="tab" data-v="massnahmen">Maßnahmen</button>
     <button class="tab" data-a="tab" data-v="behoerde">Behörde</button>
@@ -271,7 +285,7 @@ details.odds summary{cursor:pointer;font-weight:600;padding:2px 0}
       <p class="note" id="rk-note"></p>
     </div>
   </section>
-  <main id="content" data-views="amt personal laufbahn post"></main>
+  <main id="content" data-views="amt laufbahn post"></main>
   <section id="city" aria-label="Stadtansicht" data-views="stadt">
     <div class="seg" role="tablist"><button class="on" data-a="csub" data-v="viertel">Behördenviertel</button><button data-a="csub" data-v="karte">Landkarte</button></div>
     <div id="viertel">
@@ -285,7 +299,6 @@ details.odds summary{cursor:pointer;font-weight:600;padding:2px 0}
 </div>
 <nav class="dock" role="tablist" aria-label="Ansicht">
   <button class="dk on" role="tab" aria-selected="true" data-a="view" data-v="amt"><span data-ico="c1"></span>Amtsstube</button>
-  <button class="dk" role="tab" aria-selected="false" data-a="view" data-v="personal"><span data-por="1"></span>Personal</button>
   <button class="dk" role="tab" aria-selected="false" data-a="view" data-v="stadt"><span data-ico="gen5"></span>Stadt<i class="dot" id="dot-stadt"></i></button>
   <button class="dk" role="tab" aria-selected="false" data-a="view" data-v="post"><span data-ico="mail"></span>Post<i class="dot" id="dot-post"></i></button>
   <button class="dk" role="tab" aria-selected="false" data-a="view" data-v="laufbahn"><span data-ico="t3"></span>Laufbahn<i class="dot" id="dot-lauf"></i></button>
@@ -961,7 +974,7 @@ function maxAfford(i){
   return n;
 }
 let tab="massnahmen",mode=1,lastKey="";
-const pane=()=>view==="amt"?tab:view==="personal"?"stellen":view==="laufbahn"?"laufbahn":view==="post"?"post":"";
+const pane=()=>view==="amt"?tab:view==="laufbahn"?"laufbahn":view==="post"?"post":"";
 function buyN(i){if(mode==="max"){const m=maxAfford(i);return m>0?m:1}return mode}
 function buyGen(i){
   const n=buyN(i),c=costN(i,n);
@@ -1181,16 +1194,7 @@ function structKey(){
 }
 function render(){
   const T=pane();
-  if(T==="stellen"){
-    let h='<h2 class="sec">Personalabteilung</h2><p class="note">Tippe auf eine Stelle, um die Personalakte zu öffnen.</p><div class="qty">'+[1,10,"max"].map(q=>'<button class="q'+(mode===q?' on':'')+'" data-a="mode" data-v="'+q+'">'+(q==="max"?"Max":"x"+q)+'</button>').join("")+'</div>';
-    const v=visibleMax();
-    for(let i=0;i<=v;i++){
-      h+='<div class="card person" data-a="person" data-i="'+i+'" style="--ac:'+ACOL[i]+'"><div class="por">'+portrait(i)+'</div><div class="info"><h3>'+genName(i)+'<span class="lvb" id="glv'+i+'"></span></h3><p>'+GENS[i].desc+'</p><div class="meta" id="gm'+i+'"></div><div class="bar sm"><i id="glb'+i+'"></i></div></div>'+
-         '<button class="buy" data-a="gen" data-i="'+i+'" id="gb'+i+'"><span class="n" id="gbn'+i+'"></span><span class="c" id="gbc'+i+'"></span></button></div>';
-    }
-    if(v+1<GENS.length)h+='<div class="card locked"><div class="info"><h3>Stelle nicht ausgeschrieben</h3><p>Wird erst nach Klärung der Zuständigkeit besetzt.</p></div></div>';
-    content.innerHTML=h;
-  }else if(T==="massnahmen"){
+  if(T==="massnahmen"){
     const ups=availableUps();
     let h='<h2 class="sec">Beschlussreife Maßnahmen</h2>';
     if(!ups.length)h+='<p class="note">Derzeit ist keine Maßnahme beschlussreif. Mehr Personal einstellen oder mehr stempeln, dann folgt die Wiedervorlage.</p>';
@@ -1295,19 +1299,8 @@ function update(){
   if(personOpen>=0)refreshPerson();
 
   const T=pane();
-  if(T==="stellen"){
-    const v=visibleMax();
-    for(let i=0;i<=v;i++){
-      const n=buyN(i),c=costN(i,n);
-      const each=S.owned[i]?genBase(i)*gmult():GENS[i].prod*Math.pow(2,tierCount(i))*gmult();
-      const lvx=amtLevel(i);document.getElementById("gm"+i).textContent=S.owned[i]?("Besetzt: "+S.owned[i]+", Ertrag "+fmt(each,true)+"/s"+(S.amtT[i]?", Ausbau läuft":amtReady(i)?", Ausbau in der Stadt bereit":lvx<AMT_LV.length?", Stufe "+(lvx+1)+" ab "+AMT_LV[lvx]:", voll ausgebaut")):("Unbesetzt, Ertrag je Stelle "+fmt(each,true)+"/s");
-      document.getElementById("gbn"+i).textContent="Einstellen +"+n;
-      document.getElementById("gbc"+i).textContent=fmt(c);
-      const gb=document.getElementById("gb"+i);gb.disabled=S.akten<c;gb.style.setProperty("--pg",Math.min(100,S.akten/c*100)+"%");
-      const lv=amtLevel(i);document.getElementById("glv"+i).textContent="Stufe "+lv;
-      document.getElementById("glb"+i).style.width=Math.min(100,lv>=AMT_LV.length?100:(lv?(S.owned[i]-AMT_LV[lv-1])/(AMT_LV[lv]-AMT_LV[lv-1])*100:0))+"%";
-    }
-  }else if(T==="massnahmen"){
+  if(view==="amt")updateStaff();
+  if(T==="massnahmen"){
     content.querySelectorAll("[data-cost]").forEach(b=>{b.disabled=S.akten<+b.dataset.cost;b.style.setProperty("--pg",Math.min(100,S.akten/+b.dataset.cost*100)+"%")});
     const m=document.getElementById("digimeta");
     if(m)m.textContent="Bisher "+S.digiCount+" Versuche, davon "+S.digiHits+" erfolgreich. Bonus: +"+Math.round((S.digiMult-1)*100)+" %";
@@ -1346,6 +1339,34 @@ function update(){
     set("st-life",fmt(S.lifetime));set("st-clicks",S.clicks.toLocaleString("de-DE"));set("st-eilt",S.eilt);
     set("st-digi",S.digiCount+" (davon "+S.digiHits+" erfolgreich)");set("st-city",S.city+" von "+(CITIES.length-1));
   }
+}
+
+/* Personal als Amtsgebäude unter dem Schreibtisch */
+const staff=document.getElementById("staff");let staffKey="";
+function renderStaff(){
+    let h='<h2 class="sec">Personalabteilung</h2><p class="note">Jede Stelle hat ihre eigene Etage, der Paternoster bringt die Akten zur Poststelle. Tippe auf eine Etage für die Personalakte.</p><div class="qty">'+[1,10,"max"].map(q=>'<button class="q'+(mode===q?' on':'')+'" data-a="mode" data-v="'+q+'">'+(q==="max"?"Max":"x"+q)+'</button>').join("")+'</div>';
+    const v=visibleMax();
+    h+='<div class="tower" id="tower"><canvas class="shaft" aria-hidden="true"></canvas><div class="floor post"><canvas data-f="post" role="img" aria-label="Poststelle"></canvas></div>';
+    for(let i=0;i<=v;i++){
+      h+='<div class="floor person" data-a="person" data-i="'+i+'" style="--ac:'+ACOL[i]+'"><div class="fl-hd"><div class="info"><h3>'+genName(i)+'<span class="lvb" id="glv'+i+'"></span></h3><div class="meta" id="gm'+i+'"></div><div class="bar sm"><i id="glb'+i+'"></i></div></div>'+
+         '<button class="buy" data-a="gen" data-i="'+i+'" id="gb'+i+'"><span class="n" id="gbn'+i+'"></span><span class="c" id="gbc'+i+'"></span></button></div><canvas data-f="'+i+'" aria-hidden="true"></canvas></div>';
+    }
+    if(v+1<GENS.length)h+='<div class="floor locked"><h3>Stelle nicht ausgeschrieben</h3><p>Wird erst nach Klärung der Zuständigkeit besetzt.</p></div>';
+    staff.innerHTML=h+'</div>';initTower();
+}
+function updateStaff(){
+  const k=[mode,visibleMax(),S.reform+S.city].join("|");if(k!==staffKey){staffKey=k;renderStaff()}
+    const v=visibleMax();
+    for(let i=0;i<=v;i++){
+      const n=buyN(i),c=costN(i,n);
+      const each=S.owned[i]?genBase(i)*gmult():GENS[i].prod*Math.pow(2,tierCount(i))*gmult();
+      const lvx=amtLevel(i);document.getElementById("gm"+i).textContent=S.owned[i]?("Besetzt: "+S.owned[i]+", Ertrag "+fmt(each,true)+"/s"+(S.amtT[i]?", Ausbau läuft":amtReady(i)?", Ausbau in der Stadt bereit":lvx<AMT_LV.length?", Stufe "+(lvx+1)+" ab "+AMT_LV[lvx]:", voll ausgebaut")):("Unbesetzt, Ertrag je Stelle "+fmt(each,true)+"/s");
+      document.getElementById("gbn"+i).textContent="Einstellen +"+n;
+      document.getElementById("gbc"+i).textContent=fmt(c);
+      const gb=document.getElementById("gb"+i);gb.disabled=S.akten<c;gb.style.setProperty("--pg",Math.min(100,S.akten/c*100)+"%");
+      const lv=amtLevel(i);document.getElementById("glv"+i).textContent="Stufe "+lv;
+      document.getElementById("glb"+i).style.width=Math.min(100,lv>=AMT_LV.length?100:(lv?(S.owned[i]-AMT_LV[lv-1])/(AMT_LV[lv]-AMT_LV[lv-1])*100:0))+"%";
+    }
 }
 
 /* ---------- Aktionen ---------- */
@@ -1399,7 +1420,7 @@ document.addEventListener("click",e=>{
   if(a==="stats"){S.noStats=!S.noStats;save();lastKey="";update();return}
   if(a==="rot"){CITY.tth+=(+b.dataset.v)*Math.PI/2;CITY.last=performance.now();return}
   if(a==="tab"){tab=b.dataset.v;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));lastKey="";update();return}
-  if(a==="mode"){mode=b.dataset.v==="max"?"max":+b.dataset.v;lastKey="";update();return}
+  if(a==="mode"){mode=b.dataset.v==="max"?"max":+b.dataset.v;update();return}
   if(a==="gen"){if(holdFired)return;buyGen(+b.dataset.i);update();return}
   if(a==="promo"){
     if(!canPromote())return;
@@ -1601,8 +1622,231 @@ function shredNote(){
   f.style.top=(sr.top-r.top+sr.height*.45)+"px";f.style.setProperty("--r",(Math.random()*10-5)+"deg");
   setTimeout(()=>f.remove(),1200);
 }
+/* ---------- Amtsgebäude: Personal als Querschnitt mit Paternoster ----------
+   Auf jeder Etage holen sich die Figuren Arbeit am Platz, tragen die fertigen Akten zur Ablage am Schacht,
+   der Paternoster sammelt sie ein und bringt sie nach oben in die Poststelle. Rein darstellend:
+   Die Beträge an den Akten sind der Anteil der echten Produktion, gezählt wird weiter über pps(). */
+const TW={fl:[],cab:[],pf:{pile:0,val:0,cols:[],c:{st:0,x:34,t:0,ph:0,val:0,cols:[]},cap:null,fx:[]},pos:[],posAt:0,sh:null,cvs:[],H:0,t:0,last:0};
+const TRAY_X=34,GY=56,CAB_GAP=62,CAB_V=.03,CAB_H=36;
+const FIG=[ // passend zu den Porträts in der Personalakte
+ {suit:"#e07a2e",dark:"#b35a1a",legs:"#3d4a66",hair:"#7a4a24",skin:"#f2c7a5"},
+ {suit:"#a08a5c",dark:"#8a7548",legs:"#4b4c58",hair:"#b4b4ad",skin:"#e8b98f",bald:1,tie:"#7b2d3a"},
+ {suit:"#8a6bd1",dark:"#6f53b8",legs:"#3a3d46",hair:"#2e2420",skin:"#f2c7a5",bun:1},
+ {suit:"#3a3d46",dark:"#2b2d36",legs:"#2b2d36",hair:"#2e2420",skin:"#e8b98f",bald:1,tie:"#c0392b"},
+ {suit:"#3fa56b",dark:"#2c7a4d",legs:"#3a3d46",hair:"#c8642a",skin:"#f2c7a5"},
+ {suit:"#23252b",dark:"#16171b",legs:"#23252b",hair:"#b4b4ad",skin:"#e8b98f",tie:"#2f4fa8"},
+ {suit:"#2f4fa8",dark:"#223b85",legs:"#23252b",hair:"#23201d",skin:"#f2c7a5",tie:"#e8b820"},
+ {suit:"#3a3d46",dark:"#2b2d36",legs:"#2b2d36",hair:"#ecebe4",skin:"#e8b98f",bald:1,beard:1,chain:1}
+];
+const POSTFIG={suit:"#3d64b0",dark:"#1f3a6e",legs:"#23252b",hair:"#6b4423",skin:"#f0c29a",cap:"#1f3a6e"};
+let tg=null;
+function gR(x,y,w,h,r,c){tg.fillStyle=c;tg.beginPath();if(tg.roundRect)tg.roundRect(x,y,w,h,r);else tg.rect(x,y,w,h);tg.fill()}
+function gO(x,y,rx,ry,c){tg.fillStyle=c;tg.beginPath();tg.ellipse(x,y,rx,ry,0,0,Math.PI*2);tg.fill()}
+function gL(x0,y0,x1,y1,c,w){tg.strokeStyle=c;tg.lineWidth=w;tg.lineCap="round";tg.beginPath();tg.moveTo(x0,y0);tg.lineTo(x1,y1);tg.stroke()}
+function gP(pts,c){tg.fillStyle=c;tg.beginPath();pts.forEach((p,k)=>k?tg.lineTo(p[0],p[1]):tg.moveTo(p[0],p[1]));tg.closePath();tg.fill()}
+function mixC(a,b,t){const h=x=>[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)],A=h(a),B=h(b);return"rgb("+A.map((v,k)=>Math.round(v+(B[k]-v)*t)).join(",")+")"}
+function bubble(x,y,t){
+  tg.font="600 7px 'IBM Plex Sans',system-ui,sans-serif";const w=tg.measureText(t).width+7;
+  gP([[x+4,y+9],[x+9,y+9],[x+5,y+13]],"#fbfaf4");gR(x,y,w,10,3,"#fbfaf4");tg.strokeStyle="#b9b5a4";tg.lineWidth=.5;tg.beginPath();if(tg.roundRect)tg.roundRect(x,y,w,10,3);else tg.rect(x,y,w,10);tg.stroke();
+  tg.fillStyle="#23242b";tg.textAlign="left";tg.textBaseline="middle";tg.fillText(t,x+3.5,y+5.4);
+}
+function floatTxt(f,col){
+  tg.globalAlpha=Math.min(1,f.life/450);tg.font="700 9px 'IBM Plex Sans',system-ui,sans-serif";tg.textAlign="center";tg.textBaseline="middle";
+  const t="+"+fmt(f.v,true);tg.lineJoin="round";tg.strokeStyle=darkMode?"#26272a":"#fbfaf4";tg.lineWidth=3;tg.strokeText(t,f.x,f.y);tg.fillStyle=col;tg.fillText(t,f.x,f.y);tg.globalAlpha=1;
+}
+// Figur mit Füßen bei (x, GY); d = Blickrichtung, ph = Schrittphase, carry = Aktenfarben, hand = {dx,dy,tool}
+function fig(x,d,walk,ph,carry,hand,F){
+  const b=walk?-Math.abs(Math.sin(ph))*1.2:0,s=walk?Math.sin(ph)*3.6:0;
+  gL(x-1.2,44+b,x-1.2+s,GY-1.2,F.legs,2.6);gL(x+1.2,44+b,x+1.2-s,GY-1.2,F.legs,2.6);
+  gO(x-1.2+s+d,GY-.7,2.1,1,"#23242b");gO(x+1.2-s+d,GY-.7,2.1,1,"#23242b");
+  gR(x-5,31+b,10,15,[4,4,1.5,1.5],F.suit);gR(x-5,43.5+b,10,2.5,[0,0,1.5,1.5],F.dark);
+  if(F.tie){gP([[x+d*1.2-1.6,31.4+b],[x+d*1.2+1.6,31.4+b],[x+d*1.2,33.6+b]],"#fbfaf4");gL(x+d*1.2,33+b,x+d*1.2,38+b,F.tie,1.3)}
+  const hy=24+b;
+  gO(x,hy,5.6,6,F.skin);
+  if(F.cap){tg.fillStyle=F.cap;tg.beginPath();tg.ellipse(x,hy-2,6,4.6,0,Math.PI,0);tg.fill();gR(x-d*1+ (d>0?0:-7),hy-2.6,8,1.6,.8,F.cap)}
+  else if(F.bald){gO(x-d*4.4,hy+.2,1.7,2.8,F.hair);gO(x-d*1.5,hy-4.9,2.6,1,F.hair)}
+  else{tg.fillStyle=F.hair;tg.beginPath();tg.ellipse(x-d*.6,hy-1.4,6,5,0,Math.PI,0);tg.fill();gO(x-d*4.2,hy,2,3.4,F.hair)}
+  if(F.bun)gO(x-d*5.6,hy-3.6,2.4,2.4,F.hair);
+  if(F.beard)gO(x+d*1.2,hy+4.2,4.4,2.8,F.hair);
+  if(F.chain){tg.strokeStyle="#e5a823";tg.lineWidth=.9;tg.beginPath();tg.moveTo(x-4,32+b);tg.quadraticCurveTo(x,38+b,x+4,32+b);tg.stroke();gO(x,37.2+b,1.3,1.3,"#e5a823")}
+  gO(x+d*2.7,hy+.2,.75,.9,"#2b2d36");gO(x+d*5.2,hy+1.6,1,.9,F.skin);
+  if(carry&&carry.length){
+    const cx0=x+d*5;for(let k=0;k<3;k++)gR(cx0-4.5,34.5+b-k*1.9,9,1.8,.4,k===1?"#fbfaf4":carry[k%carry.length]);
+    gL(x,34+b,cx0,35.5+b,F.suit,2.6);gO(cx0,35.8+b,1.4,1.4,F.skin);
+  }else if(hand){
+    const hx=x+d*hand.dx,hy2=34+b+hand.dy;gL(x,34+b,hx,hy2,F.suit,2.6);
+    if(hand.tool==="stamp"){gO(hx,hy2-2.3,1,1,"#8a5a3b");gR(hx-2,hy2+1,4,1.4,.4,"#3a3d46");gR(hx-2,hy2+2.3,4,.7,.3,stampCol)}
+    if(hand.tool==="pen")gL(hx,hy2,hx+d*2,hy2+2.5,"#23242b",.8);
+    gO(hx,hy2,1.4,1.4,F.skin);
+  }else{gL(x,34+b,x-s*.6,42.5+b,F.suit,2.6);gO(x-s*.6,42.8+b,1.3,1.3,F.skin)}
+}
+const crew=i=>{const o=S.owned[i];return o>=40?4:o>=15?3:o>=5?2:o?1:0};
+const flSpeed=i=>(1+.3*tierCount(i))*(buffMul("prod")>1?2:1);
+function stX(k,n,W){const a=80,b=W-44;return n<2?Math.round((a+b)/2):a+(b-a)*k/(n-1)}
+function stepFloor(i,dt,W,now){
+  const F=TW.fl[i]||(TW.fl[i]={w:[],tray:0,val:0,fx:[]}),n=crew(i);
+  while(F.w.length<n)F.w.push({st:1,x:stX(F.w.length,n,W),t:Math.random()*1800,ph:0,t0:now});
+  F.w.length=n;
+  const sp=flSpeed(i),v=Math.min(.12,.034*sp),wt=2600/sp,rate=genBase(i)*gmult();F.wt=wt;
+  F.w.forEach((w,k)=>{const sx=stX(k,n,W);
+    if(w.st===0){w.x+=v*dt;w.ph+=dt*.015;if(w.x>=sx){w.x=sx;w.st=1;w.t=0}}
+    else if(w.st===1){w.x=sx;w.t+=dt;if(w.t>=wt)w.st=2}
+    else if(w.st===2){w.x-=v*dt;w.ph+=dt*.015;if(w.x<=TRAY_X){w.x=TRAY_X;w.st=3;w.t=0;
+      const val=Math.max(0,rate/n*(now-w.t0)/1000);w.t0=now;F.tray++;F.val+=val;F.fx.push({x:17,y:30,v:val,life:1300})}}
+    else{w.t+=dt;if(w.t>=300)w.st=0}
+  });
+  F.fx.forEach(f=>{f.life-=dt;f.y-=dt*.011});F.fx=F.fx.filter(f=>f.life>0);
+}
+function stepPost(dt,W){
+  const P=TW.pf,c=P.c,v=.07,tube=W-32;
+  if(c.st===0){c.x=TRAY_X;if(P.pile>0){c.st=1;c.val=P.val;c.cols=P.cols.slice(-3);P.pile=0;P.val=0;P.cols=[]}}
+  else if(c.st===1){c.x+=v*dt;c.ph+=dt*.016;if(c.x>=tube){c.x=tube;c.st=2;c.t=0;P.cap={t:0};P.fx.push({x:W-16,y:30,v:c.val,life:1600})}}
+  else if(c.st===2){c.t+=dt;if(c.t>=350)c.st=3}
+  else{c.x-=v*dt;c.ph+=dt*.016;if(c.x<=TRAY_X){c.x=TRAY_X;c.st=0}}
+  if(P.cap){P.cap.t+=dt;if(P.cap.t>700)P.cap=null}
+  P.fx.forEach(f=>{f.life-=dt;f.y-=dt*.009});P.fx=P.fx.filter(f=>f.life>0);
+}
+function stepCabs(dt){
+  const dy=CAB_V*dt*(buffMul("prod")>1?2:1),H=TW.H;
+  TW.cab.forEach(c=>{const b0=c.y+CAB_H-3;c.y-=dy;const b1=c.y+CAB_H-3;
+    TW.pos.forEach(p=>{if(b0>p.line&&b1<=p.line){
+      if(p.i==="post"){if(c.n){const P=TW.pf;P.pile+=c.n;P.val+=c.val;P.cols.push(...c.cols);P.cols=P.cols.slice(-8);c.n=0;c.val=0;c.cols=[]}}
+      else{const F=TW.fl[p.i];if(F&&F.tray){c.n+=F.tray;c.val+=F.val;for(let k=0;k<Math.min(F.tray,8);k++)c.cols.push(ACOL[p.i]);c.cols=c.cols.slice(-8);F.tray=0;F.val=0}}}})});
+  TW.cab=TW.cab.filter(c=>c.y>-CAB_H-20);
+  let low=TW.cab.length?Math.max(...TW.cab.map(c=>c.y)):-CAB_H-20;
+  while(low<H+CAB_GAP){low+=CAB_GAP;TW.cab.push({y:low,n:0,val:0,cols:[]})}
+}
+function prop(i,x,w,now,wt){
+  const on=w.st===1,p=on?Math.min(1,w.t/wt):0,T=now;
+  const desk=(a,b)=>{gL(x+a+2,44,x+a+2,GY,"#7a5236",1.6);gL(x+a+b-2,44,x+a+b-2,GY,"#7a5236",1.6);gR(x+a,42,b,2.6,.8,"#a0704a");gR(x+a,42,b,.9,.5,"#bb875b")};
+  const stampUp=on?Math.abs(Math.sin(T/170))*5:2;
+  switch(i){
+  case 0:{ // Kopierer mit Blitzlicht
+    gR(x+8,38,20,18,2,"#d9d7cf");gR(x+8,35.5,20,3.4,1.2,"#8b8e96");gR(x+10,42,16,1,.5,"#b9b6aa");gR(x+10,47,16,1,.5,"#b9b6aa");
+    const f=(T/300)%1;gR(x+27+(on?f*4:0),44,6,1.3,.4,"#fbfaf4");
+    if(on&&f<.45)gR(x+9,38.8,18,1.3,.5,"rgba(255,236,140,.95)");
+    gO(x+24.5,40.2,.8,.8,on?"#6be06b":"#2c4a2c");
+    return{dx:4,dy:on?3+Math.sin(T/130)*.8:3};}
+  case 1:{ // Schreibtisch, Akte wird gestempelt
+    desk(7,24);gR(x+13,40.4,11,1.6,.3,"#fbfaf4");if(p>.3)gR(x+16.5,40.7,4,.8,.3,stampCol);
+    return{dx:9,dy:3.2-stampUp,tool:"stamp"};}
+  case 2:{ // Röhrenmonitor und Kaffeetasse
+    desk(7,24);gR(x+15,31,13,10.5,1.6,"#cfcabc");gR(x+16.5,32.5,10,6.8,1,"#1f3a2e");gR(x+19.5,41.3,4,.9,.3,"#8b8e96");
+    if(on)for(let r=0;r<3;r++)gR(x+17.5,33.7+r*1.8,(T/90+r*3)%8,.8,.3,"#6be06b");
+    gR(x+8.5,38.4,3.2,3.6,[.3,.3,1,1],"#c9463a");
+    tg.strokeStyle="rgba(150,150,145,.7)";tg.lineWidth=.4;const q=Math.sin(T/300)*.7;tg.beginPath();tg.moveTo(x+10,37.6);tg.quadraticCurveTo(x+10+q,35.5,x+10,33.5);tg.stroke();
+    return{dx:8,dy:on?4+Math.sin(T/55)*.7:4};}
+  case 3:{ // Flipchart, die Kurve wächst
+    gL(x+12,40,x+10,GY,"#6c6e72",1.2);gL(x+24,40,x+26,GY,"#6c6e72",1.2);
+    gR(x+9,21,18,20,1,"#fbfaf4");gR(x+9,21,18,1.8,.5,"#8b8e96");
+    const pts=[[11,38],[14,35],[17,36.5],[20,31],[23,32.5],[25.5,25.5]],m=on?p*(pts.length-1):pts.length-1;
+    tg.strokeStyle=ACOL[3];tg.lineWidth=1.1;tg.lineJoin="round";tg.beginPath();tg.moveTo(x+pts[0][0],pts[0][1]);
+    for(let k=1;k<=Math.ceil(m);k++){const f=Math.min(1,m-(k-1)),a=pts[k-1],c=pts[k];tg.lineTo(x+a[0]+(c[0]-a[0])*f,a[1]+(c[1]-a[1])*f)}tg.stroke();
+    return on?{dx:8+p*6,dy:-7-p*3,tool:"pen"}:{dx:6,dy:4};}
+  case 4:{ // Runder Tisch, es wird beraten
+    gL(x+20,44,x+20,GY,"#5e3e28",2);gO(x+20,GY,5,1,"#5e3e28");gO(x+20,42.6,11,2.3,"#8a5a3b");
+    gR(x+14,39.5,2.4,3,.4,"#fbfaf4");gR(x+24,39.5,2.4,3,.4,"#fbfaf4");
+    if(on&&p>.15&&p<.85)bubble(x+2,4,["TOP 7","Bedenken","§ 4 Abs. 2","Vertagt"][Math.floor(w.t0/997)%4]);
+    return{dx:7,dy:on?Math.sin(T/200)*3-2:3};}
+  case 5:{ // Rednerpult mit Flagge
+    gL(x+31,12,x+31,GY,"#8b8e96",1);
+    ["#23242b","#c0392b","#e8b820"].forEach((c,k)=>{const y0=13+k*3,wv=a=>Math.sin(T/260+a*.35)*1.2;tg.fillStyle=c;tg.beginPath();tg.moveTo(x+31,y0);for(let a=0;a<=10;a+=2)tg.lineTo(x+31+a,y0+wv(a));for(let a=10;a>=0;a-=2)tg.lineTo(x+31+a,y0+3+wv(a));tg.fill()});
+    gP([[x+9,40],[x+23,40],[x+21,GY],[x+11,GY]],"#8a5a3b");gR(x+8,38.5,16,2.2,.6,"#6b4423");gO(x+16,47,2.6,2.6,"#e8b820");
+    gL(x+11,38.5,x+10,33,"#3a3d46",.8);gO(x+10,32.5,1,1.3,"#3a3d46");
+    if(on&&p>.2&&p<.8)bubble(x-4,4,"Erlass!");
+    return{dx:6,dy:on?-4+Math.sin(T/160)*3:2};}
+  case 6:{ // EU-Fahne und Sternstempel
+    gR(x+12,13,15,10,.5,"#2f4fa8");for(let k=0;k<12;k++){const a=k/12*Math.PI*2;gO(x+19.5+Math.cos(a)*3.3,18+Math.sin(a)*3.3,.45,.45,"#e8b820")}
+    desk(7,24);gR(x+13,40.4,11,1.6,.3,"#fbfaf4");if(p>.3)gO(x+18.5,41.1,1.3,.6,"#e8b820");
+    return{dx:9,dy:3.2-stampUp,tool:"stamp"};}
+  default:{ // Schreibmaschine, das Gutachten wächst
+    desk(7,24);gR(x+11,38.2,12,4,1,"#3a3d46");gR(x+12.5,34.2-p*3,9,4.4+p*3,.4,"#fbfaf4");gR(x+11,37.5,12,1.2,.5,"#5a5e67");
+    const hS=3+p*11;gR(x+25,42-hS,6,hS,.4,"#fbfaf4");for(let y=42-hS+1.2;y<41.5;y+=1.6)gR(x+25,y,6,.35,0,"#c9c5b4");
+    return{dx:9,dy:on?3+Math.sin(T/45)*.8:3};}
+  }
+}
+function floorBase(W,H,wall){
+  gR(0,0,W,GY,0,wall);gR(0,0,W,3,0,"rgba(0,0,0,.07)");
+  gR(0,GY,W,H-GY,0,darkMode?"#3a3b40":"#cfc8b4");gR(0,GY,W,1.2,0,darkMode?"#4a4b52":"#b3ab94");
+  [.45,.82].forEach(f=>{const x=Math.round(W*f);gL(x,0,x,5,"#6c6e72",.7);gP([[x-4,8],[x+4,8],[x+2.5,5],[x-2.5,5]],"#8b8e96");if(darkMode)gO(x,10,9,3,"rgba(255,230,150,.08)")});
+}
+function drawFloor(i,W,H,now){
+  const F=TW.fl[i]||{w:[],tray:0,fx:[]},ac=ACOL[i];
+  tg.clearRect(0,0,W,H);floorBase(W,H,mixC(darkMode?"#26272a":"#fbfaf4",ac,darkMode?.16:.12));
+  gL(7,46,7,GY,"#5e3e28",1.6);gL(27,46,27,GY,"#5e3e28",1.6);gR(4,44,26,2.2,.6,"#7a5236");
+  for(let k=0;k<Math.min(F.tray,9);k++)gR(6+(k%2)*.8,42-k*2,21,1.9,.4,k%2?"#fbfaf4":ac);
+  if(!S.owned[i]){
+    gR(W/2-48,12,96,15,2,"#fbfaf4");tg.strokeStyle=ac;tg.lineWidth=1;tg.strokeRect(W/2-48,12,96,15);gL(W/2-30,4,W/2-30,12,"#8b8e96",.6);gL(W/2+30,4,W/2+30,12,"#8b8e96",.6);
+    tg.fillStyle="#23242b";tg.font="600 7.5px 'IBM Plex Sans',system-ui,sans-serif";tg.textAlign="center";tg.textBaseline="middle";tg.fillText("STELLE AUSGESCHRIEBEN",W/2,19.8);
+    const cxh=W/2+4;gR(cxh-5,40,10,2,.6,"#4b4c58");gR(cxh+3,30,2,11,.6,"#4b4c58");gL(cxh-3,42,cxh-4,GY,"#3c3d47",1.2);gL(cxh+3,42,cxh+4,GY,"#3c3d47",1.2);
+    gO(W*.72,GY-1,3,1.2,"rgba(140,140,130,.5)");gO(W*.3,GY-1,2,.9,"rgba(140,140,130,.5)");return;
+  }
+  const n=F.w.length,FG=FIG[i];
+  F.w.forEach((w,k)=>{w.h=prop(i,stX(k,n,W),w,now,F.wt||2600)});
+  F.w.forEach(w=>{
+    if(w.st===0)fig(w.x,1,true,w.ph,null,null,FG);
+    else if(w.st===1)fig(w.x,1,false,0,null,w.h,FG);
+    else if(w.st===2)fig(w.x,-1,true,w.ph,[ac,ac,ac],null,FG);
+    else fig(w.x,-1,false,0,null,{dx:6,dy:4},FG);
+  });
+  F.fx.forEach(f=>floatTxt(f,ac));
+}
+function drawPost(W,H,now){
+  const P=TW.pf,c=P.c;
+  tg.clearRect(0,0,W,H);floorBase(W,H,darkMode?"#2e2f33":"#e8e4d6");
+  const rt=fmt(pps(),true)+" Akten/s";tg.font="9px 'Special Elite','Courier New',monospace";const sw=tg.measureText("POSTSTELLE").width;tg.font="600 7px 'IBM Plex Sans',system-ui,sans-serif";const sw2=sw+tg.measureText(rt).width+22;
+  gR(W/2-sw2/2,4,sw2,12,2,"#23242b");tg.textAlign="left";tg.textBaseline="middle";tg.fillStyle="#f4f3ec";tg.font="9px 'Special Elite','Courier New',monospace";tg.fillText("POSTSTELLE",W/2-sw2/2+6,10.5);
+  tg.fillStyle="#86b791";tg.font="600 7px 'IBM Plex Sans',system-ui,sans-serif";tg.fillText(rt,W/2-sw2/2+sw+16,10.3);
+  // Eingangskiste am Paternoster
+  gR(5,42,25,14,1.5,"#8a5a3b");gR(5,46,25,1,0,"#6b4423");gR(5,51,25,1,0,"#6b4423");
+  for(let k=0;k<Math.min(P.pile,7);k++)gR(7+(k%2)*.8,40.2-k*1.9,21,1.8,.4,P.cols[k]||"#fbfaf4");
+  // Rohrpost nach oben
+  const tx=W-20;gR(tx,0,8,38,2,"rgba(170,205,225,.55)");tg.strokeStyle="#8b8e96";tg.lineWidth=.6;tg.strokeRect(tx,-1,8,39);
+  if(P.cap){const y=36-P.cap.t/700*46;gR(tx+1.2,y,5.6,9,2.8,"#c9941c");gR(tx+1.2,y+3.8,5.6,1.2,0,"#8a5a3b")}
+  gR(tx-5,36,18,20,2,"#8b8e96");gR(tx-2,39,12,5,1,"#23242b");gO(tx+4,49,1.4,1.4,P.cap?"#6be06b":"#2c4a2c");
+  if(c.st===1)fig(c.x,1,true,c.ph,c.cols.length?c.cols:["#fbfaf4"],null,POSTFIG);
+  else if(c.st===2)fig(c.x,1,false,0,null,{dx:7,dy:-4},POSTFIG);
+  else if(c.st===3)fig(c.x,-1,true,c.ph,null,null,POSTFIG);
+  else fig(c.x,1,false,0,null,null,POSTFIG);
+  P.fx.forEach(f=>floatTxt(f,darkMode?"#86b791":"#3f6b4a"));
+}
+function drawShaft(){
+  const W=50,H=TW.H;tg.clearRect(0,0,W,H);
+  gR(0,0,W,H,0,darkMode?"#16171a":"#3a3d46");gR(4,0,2,H,0,"#5a5e67");gR(W-6,0,2,H,0,"#5a5e67");
+  tg.setLineDash([2,2.4]);tg.lineDashOffset=(TW.t*CAB_V)%4.4;gL(9,0,9,H,"#8b8e96",1);gL(W-9,0,W-9,H,"#8b8e96",1);tg.setLineDash([]);
+  TW.pos.forEach(p=>{if(p.top>0)gR(0,p.top-3,W,3,0,"#6c6e72")});
+  TW.cab.forEach(c=>{const y=c.y;if(y>H||y<-CAB_H)return;
+    gR(6,y,38,CAB_H,2,"#5a3e28");gR(8,y+2,34,CAB_H-5,1,"#a0704a");gR(8,y+2,34,1.2,0,"#e8d8a0");
+    for(let x=14;x<42;x+=7)gR(x,y+4,.6,CAB_H-8,0,"rgba(0,0,0,.12)");
+    gR(6,y+CAB_H-3,38,3,0,"#3a2a1c");
+    for(let k=0;k<Math.min(c.n,8);k++)gR(11+(k%2)*.7,y+CAB_H-5-k*2,28,1.8,.4,c.cols[k]||"#fbfaf4")});
+  const a=TW.t*CAB_V/12;
+  [[W/2,12],[W/2,H-12]].forEach(([x,y],k)=>{gO(x,y,13,13,"#4b4e56");gO(x,y,10,10,"#6c6e72");
+    for(let s=0;s<6;s++){const q=(k?-a:a)+s/6*Math.PI*2;gL(x,y,x+Math.cos(q)*9,y+Math.sin(q)*9,"#4b4e56",1.6)}gO(x,y,2.4,2.4,"#c9c5b4")});
+}
+function initTower(){
+  const t=document.getElementById("tower");if(!t){TW.sh=null;TW.cvs=[];return}
+  const sh=t.querySelector(".shaft");TW.sh={cv:sh,ctx:sh.getContext("2d"),W:0,H:0};
+  TW.cvs=[...t.querySelectorAll("canvas[data-f]")].map(cv=>({i:cv.dataset.f==="post"?"post":+cv.dataset.f,cv,ctx:cv.getContext("2d"),W:0,H:0}));TW.posAt=0;
+}
+// Etagen-Szenen rechnen in 66 Einheiten Höhe und werden auf die Canvas-Höhe skaliert, der Schacht in CSS-Pixeln
+function fitCv(o,units){const w=o.cv.clientWidth,h=o.cv.clientHeight,d=Math.min(3,window.devicePixelRatio||1),k=units?h/units:1;
+  if(w!==o.cw||h!==o.ch){o.cw=w;o.ch=h;o.cv.width=Math.round(w*d);o.cv.height=Math.round(h*d)}o.W=w/k;o.H=h/k;o.k=k;o.ctx.setTransform(d*k,0,0,d*k,0,0)}
+function drawTower(now,dt){
+  if(!TW.sh||!TW.sh.cv.isConnected)return;
+  // Nach einer Pause (anderer Reiter) nicht die ganze Abwesenheit auf die nächste Akte buchen
+  if(now-TW.last>500)TW.fl.forEach(F=>F&&F.w.forEach(w=>w.t0=now));TW.last=now;
+  if(calmMotion.matches)dt=0;
+  TW.t+=dt;fitCv(TW.sh);TW.H=TW.sh.H;
+  TW.cvs.forEach(o=>{fitCv(o,66);if(o.i==="post")stepPost(dt,o.W);else stepFloor(o.i,dt,o.W,now)});
+  if(now-TW.posAt>500){TW.posAt=now;TW.pos=TW.cvs.map(o=>{const f=o.cv.parentElement;return{i:o.i,top:f.offsetTop,line:f.offsetTop+o.cv.offsetTop+44*o.k}})}
+  stepCabs(dt);
+  const vh=window.innerHeight;
+  TW.cvs.forEach(o=>{const r=o.cv.getBoundingClientRect();if(r.bottom<0||r.top>vh)return;tg=o.ctx;if(o.i==="post")drawPost(o.W,o.H,now);else drawFloor(o.i,o.W,o.H,now)});
+  tg=TW.sh.ctx;drawShaft();
+}
 let lastF=performance.now();
-function frame(now){const dt=Math.min(64,now-lastF);lastF=now;step(dt,now);if(view==="stadt"&&citySub==="viertel")drawCity(now,dt);else if(view==="amt")drawScene(now);if(mapCv&&mapCv.isConnected)drawMap(now,dt);requestAnimationFrame(frame)}
+function frame(now){const dt=Math.min(64,now-lastF);lastF=now;step(dt,now);if(view==="stadt"&&citySub==="viertel")drawCity(now,dt);else if(view==="amt"){drawScene(now);drawTower(now,dt)}if(mapCv&&mapCv.isConnected)drawMap(now,dt);requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 
 /* Ticker */
@@ -1845,7 +2089,7 @@ function openPerson(i){
   const sd=i*7+S.reform*3,nm=VN[(sd+i)%VN.length]+" "+NN[(sd*5+2)%NN.length],P=PERS[i],r=(a,b,id)=>'<div class="row"><span>'+a+'</span><span'+(id?' id="'+id+'"':'')+'>'+(b||"")+'</span></div>';
   const m=document.createElement("div");m.className="modal";m.id="personModal";
   m.innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="Personalakte" style="--ac:'+ACOL[i]+';border-top-color:'+ACOL[i]+'"><div class="pbig">'+portrait(i)+'</div>'+
-    '<h2 class="type c">'+genName(i)+'</h2><p class="sub">Dienstälteste Kraft: '+nm+', '+AMT[i]+'</p><p class="quote">„'+P.motto+'“</p><div class="stats">'+
+    '<h2 class="type c">'+genName(i)+'</h2><p class="sub">Dienstälteste Kraft: '+nm+', '+AMT[i]+'</p><p class="quote">„'+P.motto+'“</p><p class="sub">'+GENS[i].desc+'</p><div class="stats">'+
     r("Besetzte Stellen","","pp-own")+r("Ertrag je Stelle","","pp-each")+r("Ertrag gesamt","","pp-tot")+r("Anteil an der Produktion","","pp-share")+
     r("Maßnahmen in Kraft","","pp-ups")+r("Amtsgebäude","","pp-amt")+r("Lieblingsformular",P.fav)+r("Besonderheit",P.trait)+
     '</div><div class="btnrow"><button class="btn alt" data-a="pclose">Schließen</button><button class="btn" data-a="gen" data-i="'+i+'" id="pp-buy"></button></div></div>';
