@@ -55,7 +55,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex San
 .eff{font-size:11.5px;color:var(--muted);margin-top:2px}
 
 .zone{position:relative;display:flex;flex-direction:column;align-items:center;padding:8px 0 2px;user-select:none;-webkit-user-select:none}
-.desk{border:0;background:transparent;padding:0;margin:0;cursor:pointer;touch-action:manipulation;width:min(270px,78%);display:block;border-radius:4px}
+.desk{border:0;background:transparent;padding:0;margin:0;cursor:pointer;touch-action:manipulation;width:min(338px,96%);display:block;border-radius:4px}
 .desk canvas{width:100%;height:auto;display:block}
 .desk:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 .power{margin-top:6px;font-size:12px;color:var(--muted)}
@@ -313,6 +313,7 @@ const CLICK_UPS=[
  {id:"c4",name:"Stempelroboter (Pilotphase)",cost:5e6,desc:"Stempelkraft mal fünf. Die Pilotphase endet nie."}
 ];
 const STAMP_WORDS=["GENEHMIGT","ABGELEHNT","ZUR KENNTNIS","WIEDERVORLAGE","EINGANG","GEPRÜFT","ZURÜCK AN ABS.","ERLEDIGT","ZDA"];
+const SHRED_WORDS=["FORMFEHLER","UNZUSTÄNDIG","FRIST VERSÄUMT","FALSCHES FORMULAR","DURCHSCHLAG FEHLT","FALSCHE TINTENFARBE","NICHT GELOCHT","ZUR VERNICHTUNG"];
 const TICKER=[
  "Eingang bestätigt. Bearbeitungsdauer: 6 bis 8 Wochen.",
  "Zuständigkeit geklärt. Leider nicht bei uns.",
@@ -1426,7 +1427,7 @@ document.getElementById("stamp").addEventListener("click",e=>{
   f.textContent=STAMP_WORDS[Math.floor(Math.random()*STAMP_WORDS.length)]+" +"+fmt(c,true);
   zone.appendChild(f);
   const side=S.clicks%2?1:-1,half=f.offsetWidth/2+4;
-  const x=Math.min(r.width-half,Math.max(half,sr.left-r.left+sr.width/2+side*(sr.width*.42+Math.random()*sr.width*.12)));
+  const x=Math.min(r.width-half,Math.max(half,sr.left-r.left+sr.width*((side<0?10:68)+Math.random()*7)/SW));
   const y=sr.top-r.top+sr.height*(.62+Math.random()*.22);
   f.style.left=x+"px";f.style.top=y+"px";f.style.setProperty("--r",(Math.random()*24-12)+"deg");
   setTimeout(()=>f.remove(),1200);
@@ -1442,7 +1443,7 @@ function readVars(){const cs=getComputedStyle(document.documentElement),v=cs.get
 readVars();setInterval(readVars,1500);
 const px=(x,y,w,h,c)=>{cx.fillStyle=c;cx.fillRect(Math.round(x),Math.round(y),w,h)};
 function line(x0,y0,x1,y1,c,t){const d=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))||1;for(let i=0;i<=d;i++){const f=i/d;px(x0+(x1-x0)*f-(t>1?1:0),y0+(y1-y0)*f-(t>1?1:0),t,t,c)}}
-const A={phase:-1,t:0,queue:0,auto:false,inbox:8,outbox:3,sheet:null,shake:0,parts:[],blinkAt:0,lastCycle:0,taps:[],heat:0,ang:0,sweat:[]};
+const A={phase:-1,t:0,queue:0,auto:false,inbox:8,outbox:3,sheet:null,shake:0,parts:[],blinkAt:0,lastCycle:0,taps:[],heat:0,ang:0,sweat:[],shred:null,binFill:.3};
 // Eigenes Stempeln treibt die "Windmühle" an: heat = geglättete Tipper pro Sekunde.
 // Ab ~1/s kreisen die Arme, ab ~3/s volle Kreise, ab 4/s zittert der Beamte, ab 5/s schwitzt er.
 const calmMotion=matchMedia("(prefers-reduced-motion: reduce)");
@@ -1463,7 +1464,7 @@ function startPhase(p){
 }
 function endPhase(p){
   if(p===3){A.sheet.mark=true;A.shake=4;for(let i=0;i<7;i++)A.parts.push({x:40+(Math.random()*8-4),y:39,vx:(Math.random()-.5)*.05,vy:-Math.random()*.035,life:350})}
-  if(p===5){A.outbox++;A.sheet=null;if(A.outbox>12)A.outbox=3;if(A.inbox<3)A.inbox+=6}
+  if(p===5){if(A.sheet&&!A.shred&&Math.random()<.17){if(A.binFill>=1)A.binFill=0;A.shred={st:"fly",t:0,x0:A.sheet.x,y0:A.sheet.y,p:0}}else A.outbox++;A.sheet=null;if(A.outbox>12)A.outbox=3;if(A.inbox<3)A.inbox+=6}
   if(p===6){if(!A.auto&&A.queue>0)A.queue--;A.phase=-1;A.lastCycle=performance.now();if(A.queue>0){A.auto=false;startPhase(0)}return}
   startPhase(p+1);
 }
@@ -1489,10 +1490,15 @@ function step(dt,now){
   A.heat+=(A.taps.length-A.heat)*Math.min(1,dt*.005);if(A.heat<.02)A.heat=0;
   A.ang+=dt*Math.min(.04,.004+A.heat*.0035);
   if(A.heat>5&&!calmMotion.matches&&Math.random()<dt*(A.heat-5)*.002)A.sweat.push({x:40+(Math.random()*12-6),y:9+Math.random()*3,vx:(Math.random()-.5)*.06,vy:-.02-Math.random()*.03,life:600});
+  if(A.shred){const q=A.shred;q.t+=dt;
+    if(q.st==="fly"&&q.t>=450){q.st="feed";q.t=0;shredNote()}
+    else if(q.st==="feed"){q.p=Math.min(1,q.t/3800);if(q.p>=1){A.shred=null;A.binFill=Math.min(1,A.binFill+.14)}}}
   A.sweat.forEach(q=>{q.vy+=dt*.00012;q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt});A.sweat=A.sweat.filter(q=>q.life>0&&q.y<56);
 }
 const SK=Math.max(4,Math.round(4*Math.min(2.5,window.devicePixelRatio||1)));
-cv.width=80*SK;cv.height=56*SK;
+// Szene 100x56 Einheiten: Schreibtisch um OX nach rechts versetzt, rechts daneben der Aktenvernichter
+const SW=100,OX=4;
+cv.width=SW*SK;cv.height=56*SK;
 function rr(x,y,w,h,r,c){cx.fillStyle=c;cx.beginPath();if(cx.roundRect)cx.roundRect(x,y,w,h,r);else cx.rect(x,y,w,h);cx.fill()}
 function ov(x,y,rx,ry,c){cx.fillStyle=c;cx.beginPath();cx.ellipse(x,y,rx,ry,0,0,Math.PI*2);cx.fill()}
 function sl(x0,y0,x1,y1,c,w){cx.strokeStyle=c;cx.lineWidth=w;cx.lineCap="round";cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(x1,y1);cx.stroke()}
@@ -1506,7 +1512,7 @@ function drawSheet(x,y,mark){
   if(mark){cx.strokeStyle=stampCol;cx.lineWidth=.45;cx.beginPath();if(cx.roundRect)cx.roundRect(x+7.2,y+.7,3.9,2.6,.4);else cx.rect(x+7.2,y+.7,3.9,2.6);cx.stroke();rr(x+7.8,y+1.6,2.7,.7,.3,stampCol)}
 }
 function drawScene(now){
-  cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,cv.width,cv.height);cx.setTransform(SK,0,0,SK,0,0);
+  cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,cv.width,cv.height);cx.setTransform(SK,0,0,SK,SK*OX,0);
   const d=new Date();
   // Wandkalender mit Tagesdatum
   rr(8.6,3.6,11.8,12.3,1.4,"#8b8e96");rr(9,4,11,11.5,1.1,"#fbfaf4");rr(9,4,11,3.2,[1.1,1.1,0,0],C.mug);
@@ -1550,6 +1556,7 @@ function drawScene(now){
   [8,58].forEach(x=>{rr(x+dx,47.5,14,6.5,.8,C.deskFD);rr(x+1+dx,48.5,12,4.5,.6,C.deskF);rr(x+5.5+dx,50.2,3,.9,.45,C.plate)});
   rr(32+dx,47.8,16,5,.8,C.plate);rr(34+dx,49.6,12,.7,.35,C.handle);rr(36+dx,50.8,8,.6,.3,C.handle);
   drawPile(8+dx,A.inbox,false);drawPile(59+dx,A.outbox,true);
+  drawShredder(now);
   // Kaffeetasse mit Dampf
   rr(24+dx,35.8,4.2,5.2,[.4,.4,1.3,1.3],C.mug);cx.strokeStyle=C.mug;cx.lineWidth=.8;cx.beginPath();cx.arc(28.3+dx,38.2,1.1,-Math.PI/2,Math.PI/2);cx.stroke();ov(26.1+dx,36,1.8,.45,"#3b2418");
   cx.strokeStyle="rgba(150,150,145,.75)";cx.lineWidth=.4;cx.lineCap="round";
@@ -1568,6 +1575,31 @@ function drawScene(now){
   cx.restore();
   A.parts.forEach(q=>ov(q.x,q.y,.45,.45,C.hair));
   A.sweat.forEach(q=>ov(q.x,q.y,.45,.65,"#7fc4e8"));
+}
+/* Aktenvernichter rechts neben dem Schreibtisch (Szenen-Einheiten, Schlitz bei x=85.5, y=35) */
+function drawShredder(now){
+  const q=A.shred,feed=q&&q.st==="feed",X=79+(feed?(Math.random()-.5)*.35:0);
+  rr(X+.5,39,12,17,[0,0,1,1],"#5d6068");rr(X+.5,39,12,.8,0,"#4b4e56");
+  const fh=10*A.binFill;
+  if(fh>0){rr(X+2,53-fh,9,fh,.6,C.paperL);for(let k=0;k<8;k++)rr(X+2.5+k*1.05,53-fh+.3,.4,Math.max(0,fh-.6),.2,C.paper)}
+  if(feed)for(let k=0;k<5;k++){const yy=42+((now/6+k*37)%Math.max(1,11-fh));rr(X+2.7+k*1.6,yy,.5,1.6,.2,C.paper)}
+  rr(X+2,42,9,11,.6,"rgba(200,225,235,.16)");cx.strokeStyle="#44474e";cx.lineWidth=.35;cx.beginPath();if(cx.roundRect)cx.roundRect(X+2,42,9,11,.6);else cx.rect(X+2,42,9,11);cx.stroke();
+  rr(X,35,13,4.4,[1,1,.3,.3],"#3a3d46");rr(X+2,35.2,9,.7,.3,"#15161a");rr(X+1.4,37.3,5,.4,.2,"#5a5e67");rr(X+1.4,38.1,5,.4,.2,"#5a5e67");
+  ov(X+11.2,37.6,.5,.5,feed?(Math.floor(now/180)%2?"#6be06b":"#2f7a2f"):"#2c4a2c");
+  if(feed){const h=8*(1-q.p);rr(X+3.2,35.6-h,7.4,h,.3,"rgba(0,0,0,.14)");rr(X+2.8,35.2-h,7.4,h,.3,C.paper);cx.strokeStyle="#b9b5a4";cx.lineWidth=.3;cx.strokeRect(X+2.8,35.2-h,7.4,h);if(h>2)rr(X+3.6,35.2-h+.8,4,.5,.2,C.paperL);
+    if(h>4){cx.strokeStyle=stampCol;cx.lineWidth=.4;cx.beginPath();cx.rect(X+6.4,35.2-h+1.6,3,2);cx.stroke()}}
+  if(q&&q.st==="fly"){const k=q.t/450,x=lerp(q.x0,85.5,k),y=lerp(q.y0,31,k)-Math.sin(k*Math.PI)*9;
+    cx.save();cx.translate(x,y);cx.rotate(k*Math.PI*3);rr(-3.5,-1.3,7,2.6,.3,C.paper);cx.strokeStyle="#b9b5a4";cx.lineWidth=.3;cx.strokeRect(-3.5,-1.3,7,2.6);rr(.5,-.8,2.2,1.4,.3,stampCol);cx.restore()}
+}
+function shredNote(){
+  if(view!=="amt")return;
+  const r=zone.getBoundingClientRect(),sr=cv.getBoundingClientRect(),f=document.createElement("div");
+  f.className="float";f.textContent=SHRED_WORDS[Math.floor(Math.random()*SHRED_WORDS.length)];
+  f.style.color=f.style.borderColor="var(--warn)";zone.appendChild(f);
+  const half=f.offsetWidth/2+4;
+  f.style.left=Math.min(r.width-half,Math.max(half,sr.left-r.left+sr.width*(85.5+OX)/SW))+"px";
+  f.style.top=(sr.top-r.top+sr.height*.45)+"px";f.style.setProperty("--r",(Math.random()*10-5)+"deg");
+  setTimeout(()=>f.remove(),1200);
 }
 let lastF=performance.now();
 function frame(now){const dt=Math.min(64,now-lastF);lastF=now;step(dt,now);if(view==="stadt"&&citySub==="viertel")drawCity(now,dt);else if(view==="amt")drawScene(now);if(mapCv&&mapCv.isConnected)drawMap(now,dt);requestAnimationFrame(frame)}
