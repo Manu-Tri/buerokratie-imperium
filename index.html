@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bürokratie-Imperium</title>
-<meta name="description" content="Stempeln, Stellen schaffen, Verwaltung reformieren: ein Idle-Spiel über deutsche Amtsstuben.">
+<meta name="description" content="Stempeln, Stellen schaffen, vom Dorf bis nach Brüssel umziehen: ein Idle-Spiel über deutsche Amtsstuben.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -262,7 +262,6 @@ details.odds summary{cursor:pointer;font-weight:600;padding:2px 0}
   <nav class="tabs" role="tablist" data-views="amt">
     <button class="tab on" data-a="tab" data-v="massnahmen">Maßnahmen</button>
     <button class="tab" data-a="tab" data-v="behoerde">Behörde</button>
-    <button class="tab" data-a="tab" data-v="reform">Reform</button>
   </nav>
   <section class="rankbox" data-views="laufbahn">
     <h2 class="sec">Beförderung</h2>
@@ -745,7 +744,7 @@ function renderPost(){
     '<p class="note">Beim Aktenkoffer ist der letzte Gegenstand mindestens selten, beim Panzerschrank mindestens episch.</p></details>'+
     '<h2 class="sec">Diamanten-Kasse</h2><p class="note">Demo-Modus: Es wird kein echtes Geld abgebucht.</p>'+
     PACKS.map((P,i)=>'<div class="card" style="--ac:#3aa7d6">'+icon("dia")+'<div class="info"><h3>'+P.n+'</h3><p>'+P.d.toLocaleString("de-DE")+' Diamanten</p></div><button class="buy" data-a="diapack" data-i="'+i+'"><span class="n">Kaufen</span><span class="c">'+P.p+'</span></button></div>').join("")+
-    '<h2 class="sec">Dienstausstattung</h2><p class="note">Verbesserungen aus den Kisten. Doppelte Funde erhöhen die Stufe. Alles bleibt bei einer Verwaltungsreform erhalten.</p><div class="stats" style="padding:2px 14px">'+
+    '<h2 class="sec">Dienstausstattung</h2><p class="note">Verbesserungen aus den Kisten. Doppelte Funde erhöhen die Stufe. Alles zieht bei einem Umzug mit.</p><div class="stats" style="padding:2px 14px">'+
     GEAR.map(g=>{const lv=gearLv(g.id);return'<div class="prow" style="--ac:'+RAR[g.r].c+(lv?'':';opacity:.5')+'">'+icon(g.ico)+'<div class="info"><div class="pl"><b>'+g.n+'</b><span>'+(lv?"Stufe "+lv+" / "+g.max:"fehlt noch")+'</span></div><div class="pl sub"><span style="color:'+RAR[g.r].c+';font-weight:600">'+RAR[g.r].n+'</span><span>'+(lv?"aktuell "+gearNow(g):g.d)+'</span></div></div></div>'}).join("")+'</div>';
 }
 function updatePost(){
@@ -810,7 +809,7 @@ function moveCity(){
   S.dia+=10*n;CITY.sel=-1;CITY.cars.length=0;mapSel=-1;karteKey="";
   const o=document.createElement("div");o.className="ovl";o.innerHTML="<div><b>UMGEZOGEN</b><span>Neuer Amtssitz: "+C.n+"</span></div>";
   document.body.appendChild(o);setTimeout(()=>o.remove(),2300);
-  toast("Willkommen in "+C.n+" ("+C.t+"). Produktion dauerhaft x"+String(C.mult).replace(".",",")+", dazu "+10*n+" 💎.","#e5a823");
+  toast("Willkommen in "+C.n+" ("+C.t+"). Produktion dauerhaft x"+String(C.mult).replace(".",",")+", dazu "+10*n+" 💎. Alle Behörden tragen jetzt neue Namen.","#e5a823");
   setTimeout(()=>addBox(n>=4?"tresor":"koffer"),2600);
   lastKey="";save();update();
 }
@@ -842,7 +841,7 @@ function renderKarte(){
   let card='<div class="card" style="--ac:'+(mapSel<=cur?'var(--green)':mapSel===cur+1?'#e5a823':'var(--line)')+'">'+icon(C.ico)+'<div class="info"><h3>'+C.n+' <span class="lvb">'+C.t+'</span></h3><p>'+st+'</p><div class="meta">Produktion dauerhaft x'+String(C.mult).replace(".",",")+'</div></div></div>';
   if(R.length){
     card+='<div class="stats reqs">'+R.map((r,k)=>'<div class="req"><div class="pl"><b>'+r.n+'</b><span id="rq'+k+'">'+(mapSel===cur+1?"":r.f(r.need))+'</span></div>'+(mapSel===cur+1?'<div class="bar"><i id="rqb'+k+'"></i></div>':'')+'</div>').join("")+'</div>';
-    if(mapSel===cur+1)card+='<button class="btn" id="mvBtn" data-a="move"></button><p class="note">Ein Umzug setzt Akten, Stellen, Gebäude und Maßnahmen zurück, wie eine Reform. Laufbahn, Reformpunkte, Dienstausstattung, Diamanten und Dollar ziehen mit.</p>';
+    if(mapSel===cur+1)card+='<button class="btn" id="mvBtn" data-a="move"></button><p class="note">Ein Umzug setzt Akten, Stellen, Gebäude und Maßnahmen zurück, und alle Behörden bekommen neue Namen. Laufbahn, Auszeichnungen, Dienstausstattung, Diamanten und Dollar ziehen mit.</p>';
   }
   return'<div class="mapwrap2"><svg viewBox="0 0 320 440" class="map" role="img" aria-label="Landkarte vom Dorf bis nach Brüssel">'+deco+seg+nodes+pin+'</svg></div>'+card+
     '<h2 class="sec">Gebührenkasse</h2><div class="card" style="--ac:#3f8f4f">'+icon("usd")+'<div class="info"><h3>Verwaltungsgebühren</h3><p id="ks-t"></p><div class="bar" style="margin-top:6px"><i id="ks-b" style="background:#3f8f4f"></i></div></div><button class="buy" data-a="kasse" id="ks-btn"><span class="n">Einziehen</span><span class="c" id="ks-c"></span></button></div>'+
@@ -914,7 +913,7 @@ const tierCount=i=>TIERS.filter((t,k)=>has("g"+i+"_"+k)).length;
 const genBase=i=>GENS[i].prod*S.owned[i]*Math.pow(2,tierCount(i))*(1+0.1*Math.max(0,amtLevel(i)-1));
 function pps(){let s=0;for(let i=0;i<GENS.length;i++)s+=genBase(i);return s*gmult()}
 function clickPower(){let c=1;if(has("c1"))c*=2;if(has("c2"))c*=2;if(has("c4"))c*=5;c*=(1+0.1*S.rp)*(1+0.05*S.level)*cityMult();if(S.level>=14)c*=3;c*=(1+0.01*S.ach.length)*buffMul("click")*(1+gearSum("click"));if(has("c3"))c+=0.03*pps();return c}
-const genName=i=>GENS[i].names[S.reform%GENS[i].names.length];
+const genName=i=>GENS[i].names[(S.reform+S.city)%GENS[i].names.length];
 function gain(x){S.akten+=x;S.runTotal+=x;S.lifetime+=x;S.cityTotal+=x}
 
 const UNITS=[[1e15,"Brd."],[1e12,"Bio."],[1e9,"Mrd."],[1e6,"Mio."]];
@@ -956,7 +955,6 @@ function availableUps(){
   return a.sort((x,y)=>x.cost-y.cost);
 }
 const digiCost=()=>1000*Math.pow(5,S.digiCount);
-const reformGain=()=>Math.floor(Math.sqrt(S.runTotal/1e6));
 
 function toast(msg,col){
   const el=document.createElement("div");el.className="toast";el.textContent=msg;if(col)el.style.setProperty("--tc",col);
@@ -991,8 +989,8 @@ const ACH=[
  {id:"x1",n:"Eilt sehr",d:"Einen Eilvorgang erledigen",c:()=>S.eilt>=1},
  {id:"x2",n:"Feuerwehr",d:"10 Eilvorgänge erledigen",c:()=>S.eilt>=10},
  {id:"x3",n:"Dezemberfieber",d:"Haushaltsreste verbrennen",c:()=>false},
- {id:"r1",n:"Reformer",d:"Erste Verwaltungsreform",c:()=>S.reform>=1},
- {id:"r2",n:"Dauerbaustelle",d:"5 Verwaltungsreformen",c:()=>S.reform>=5},
+ {id:"r1",n:"Umzugskarton",d:"Den ersten Umzug abschließen",c:()=>S.city>=1||S.reform>=1},
+ {id:"r2",n:"Hauptstadtluft",d:"Die Landeshauptstadt erreichen",c:()=>S.city>=5||S.reform>=5},
  {id:"l1",n:"Aufsteiger",d:"Gehobenen Dienst erreichen",c:()=>S.level>=5},
  {id:"l2",n:"Höhere Weihen",d:"Höheren Dienst erreichen",c:()=>S.level>=10},
  {id:"l3",n:"Ganz oben",d:"Staatssekretär werden",c:()=>S.level>=MAXL},
@@ -1019,7 +1017,9 @@ function nextGoal(){
   let best=null;
   GENS.forEach((g,i)=>{if(!S.owned[i])return;TIERS.forEach((t,k)=>{if(S.owned[i]>=t.n)return;if(TIERS.slice(0,k).some(x=>S.owned[i]<x.n))return;const p=S.owned[i]/t.n;if(!best||p>best.p)best={t:t.label+" "+(i+1)+"abcd"[k]+": "+genName(i),p,v:S.owned[i]+" / "+t.n}})});
   if(best)return best;
-  return{t:"Verwaltungsreform vorbereiten",p:S.runTotal/1e6,v:fmt(S.runTotal)+" / 1,00 Mio."};
+  const nc=CITIES[S.city+1];
+  if(nc)return{t:"Umzug nach "+nc.n+" vorbereiten",p:S.cityTotal/nc.akten,v:fmt(S.cityTotal)+" / "+fmt(nc.akten)};
+  return{t:"Brüssel verwalten",p:1,v:"erreicht"};
 }
 
 /* ---------- Dienstantritt und Abwesenheit ---------- */
@@ -1149,7 +1149,7 @@ function motm(){let top=-1,b=0;GENS.forEach((g,i)=>{const v=genBase(i);if(v>b){b
 /* ---------- Rendering ---------- */
 const content=document.getElementById("content");
 function structKey(){
-  return[view,pane(),pane()==="post"?lootKey()+S.city:"",mode,S.amt.join(","),selAmt,visibleMax(),S.level,S.ach.length,S.streak,S.reform,S.rp,S.digiCount,S.runTotal>=500,availableUps().map(u=>u.id).join(",")].join("|");
+  return[view,pane(),pane()==="post"?lootKey()+S.city:"",mode,S.amt.join(","),selAmt,visibleMax(),S.level,S.ach.length,S.streak,S.reform,S.city,S.rp,S.digiCount,S.runTotal>=500,availableUps().map(u=>u.id).join(",")].join("|");
 }
 function render(){
   const T=pane();
@@ -1197,29 +1197,24 @@ function render(){
       '<div class="row"><span>Dienstantritte in Folge</span><span>'+S.streak+' (+'+(Math.min(S.streak,7)*2)+' %)</span></div>'+
       '<div class="row"><span>Auszeichnungen</span><span>'+S.ach.length+' (+'+S.ach.length+' %)</span></div>'+
       '<div class="row"><span>Nächste Beförderung ab</span><span id="lb-next">'+(S.level>=MAXL?"Endstation erreicht":fmt(xpFor(S.level))+" Akten")+'</span></div></div>'+
-      '<p class="note" style="margin-top:10px">Jede Beförderung bringt dauerhaft +5 % Produktion und Stempelkraft. Die Laufbahn bleibt bei einer Verwaltungsreform erhalten. Gezählt werden alle jemals bearbeiteten Akten.</p>'+
+      '<p class="note" style="margin-top:10px">Jede Beförderung bringt dauerhaft +5 % Produktion und Stempelkraft. Die Laufbahn bleibt bei einem Umzug erhalten. Gezählt werden alle jemals bearbeiteten Akten.</p>'+
       '<h2 class="sec">Laufbahnvorteile</h2><div class="stats">'+
       LAUF.filter(x=>x.perk).map(x=>'<div class="row'+(S.level>=x.from?' cur':'')+'"><span>'+x.name+'<br><small style="color:var(--muted);font-weight:400">'+x.perk+'</small></span><span>'+(S.level>=x.from?'aktiv':'ab '+RANKS[x.from].g)+'</span></div>').join("")+
       '</div><h2 class="sec">Karriereleiter</h2><div class="stats">'+
       RANKS.map((x,i)=>'<div class="row'+(i===S.level?' cur':i<S.level?' done':'')+'"><span>'+x.t+'</span><span>'+x.g+(i<S.level?' ✓':'')+'</span></div>').join("")+'</div>'+
-      '<h2 class="sec">Auszeichnungen '+S.ach.length+' von '+ACH.length+'</h2><p class="note">Jede Auszeichnung erhöht Produktion und Stempelkraft dauerhaft um 1 % und bleibt bei Reformen erhalten. Für je vier Auszeichnungen hängt eine Urkunde mehr an der Wand.</p><div class="stats">'+
-      ACH.map(a=>{const got=S.ach.includes(a.id);return'<div class="row'+(got?' cur':' done')+'"><span>'+a.n+'<br><small style="color:var(--muted);font-weight:400">'+a.d+'</small></span><span>'+(got?'verliehen':'offen')+'</span></div>'}).join("")+'</div>';
-    content.innerHTML=h;
-  }else if(T==="post"){
-    content.innerHTML=renderPost();
-  }else if(T==="reform"){
-    const g=reformGain();
-    let h='<h2 class="sec">Verwaltungsreform</h2><p class="note">Eine Reform setzt Akten, Stellen und Maßnahmen zurück. Alle Behörden werden umbenannt. Sonst ändert sich nichts, bis auf eins: Jeder Reformpunkt erhöht die Produktion dauerhaft um 10 %.</p>'+
-      '<div class="stats"><div class="row"><span>Reformpunkte</span><span id="st-rp"></span></div><div class="row"><span>Akten in dieser Legislaturperiode</span><span id="st-run"></span></div><div class="row"><span>Voraussetzung</span><span>1,00 Mio.</span></div></div>'+
-      '<button class="btn" id="rfBtn" data-a="reform"'+(g<1?" disabled":"")+'></button>'+
+      '<h2 class="sec">Auszeichnungen '+S.ach.length+' von '+ACH.length+'</h2><p class="note">Jede Auszeichnung erhöht Produktion und Stempelkraft dauerhaft um 1 % und bleibt bei Umzügen erhalten. Für je vier Auszeichnungen hängt eine Urkunde mehr an der Wand.</p><div class="stats">'+
+      ACH.map(a=>{const got=S.ach.includes(a.id);return'<div class="row'+(got?' cur':' done')+'"><span>'+a.n+'<br><small style="color:var(--muted);font-weight:400">'+a.d+'</small></span><span>'+(got?'verliehen':'offen')+'</span></div>'}).join("")+'</div>'+
       '<h2 class="sec">Statistik</h2><div class="stats">'+
       '<div class="row"><span>Akten insgesamt</span><span id="st-life"></span></div>'+
       '<div class="row"><span>Stempelvorgänge</span><span id="st-clicks"></span></div>'+
       '<div class="row"><span>Eilvorgänge erledigt</span><span id="st-eilt"></span></div>'+
       '<div class="row"><span>Digitalisierungsversuche</span><span id="st-digi"></span></div>'+
-      '<div class="row"><span>Durchgeführte Reformen</span><span id="st-ref"></span></div></div>'+
+      '<div class="row"><span>Umzüge</span><span id="st-city"></span></div>'+
+      (S.rp?'<div class="row"><span>Reformpunkte aus früheren Reformen</span><span>'+S.rp+' (+'+(S.rp*10)+' %)</span></div>':'')+'</div>'+
       '<button class="btn ghost" id="resetBtn" data-a="reset">Spielstand vernichten</button>';
     content.innerHTML=h;
+  }else if(T==="post"){
+    content.innerHTML=renderPost();
   }
 }
 function update(){
@@ -1229,7 +1224,7 @@ function update(){
   const t=types();
   document.getElementById("eff").textContent=t>1?("Hierarchieebenen: "+t+", Effizienz durch Verwaltungsaufwand: "+Math.round(eff()*100)+" %"):"Noch keine Hierarchie. Genießen Sie es, solange es dauert.";
   document.getElementById("power").textContent="Auf den Schreibtisch tippen: +"+fmt(clickPower(),true)+" Akten pro Stempel";
-  document.getElementById("az").textContent="Az. 0815/"+(S.reform+1);
+  document.getElementById("az").textContent="Az. 0815/"+(S.reform+S.city+1);
   const totB=GENS.reduce((a,g,k)=>a+genBase(k),0);
   for(let k=0;k<GENS.length;k++){const e=document.getElementById("mx"+k);e.style.width=(totB?genBase(k)/totB*100:0)+"%";e.style.background=ACOL[k]}
   const ng=nextGoal();
@@ -1316,16 +1311,10 @@ function update(){
     set("motm-d",m?(m.r+", ausgezeichnet "+m.w+"."):"Noch niemand eingestellt. Der Titel bleibt vorerst unbesetzt.");
   }else if(T==="post"){
     updatePost();
-  }else if(T==="reform"){
-    const g=reformGain(),b=document.getElementById("rfBtn");
-    document.getElementById("st-rp").textContent=S.rp+" (+"+(S.rp*10)+" %)";
-    document.getElementById("st-run").textContent=fmt(S.runTotal);
-    document.getElementById("st-life").textContent=fmt(S.lifetime);
-    document.getElementById("st-clicks").textContent=S.clicks.toLocaleString("de-DE");
-    document.getElementById("st-eilt").textContent=S.eilt;
-    document.getElementById("st-digi").textContent=S.digiCount+" (davon "+S.digiHits+" erfolgreich)";
-    document.getElementById("st-ref").textContent=S.reform;
-    if(b&&b.dataset.armed!=="1"){b.disabled=g<1;b.textContent=g<1?"Reform noch nicht beschlussfähig":("Reform beschließen (+"+g+" Reformpunkte)")}
+  }else if(T==="laufbahn"){
+    const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};
+    set("st-life",fmt(S.lifetime));set("st-clicks",S.clicks.toLocaleString("de-DE"));set("st-eilt",S.eilt);
+    set("st-digi",S.digiCount+" (davon "+S.digiHits+" erfolgreich)");set("st-city",S.city+" von "+(CITIES.length-1));
   }
 }
 
@@ -1391,16 +1380,6 @@ document.addEventListener("click",e=>{
     return;
   }
   if(a==="digi"){if(holdFired)return;doDigi();update();return}
-  if(a==="reform"){
-    armed(b,"Wirklich reformieren? Nochmal tippen",()=>{
-      const g=reformGain();if(g<1)return;
-      S.rp+=g;S.reform++;S.akten=0;S.runTotal=0;S.owned=GENS.map(()=>0);S.amt=GENS.map(()=>0);S.amtT=GENS.map(()=>0);S.amtS=GENS.map(()=>0);S.ups=[];S.digiMult=1;S.digiCount=0;S.digiHits=0;
-      toast("Verwaltungsreform abgeschlossen. Alle Behörden wurden umbenannt. Produktion dauerhaft +"+(S.rp*10)+" %.");
-      tab="massnahmen";document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.v==="massnahmen"));
-      lastKey="";save();update();
-    });
-    return;
-  }
   if(a==="reset"){
     armed(b,"Unwiderruflich? Nochmal tippen",()=>{S=fresh();BUFFS.length=0;try{localStorage.removeItem(SAVE_KEY)}catch(e){}tab="massnahmen";document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.v==="massnahmen"));lastKey="";update();toast("Die Akte wurde vernichtet. Ein Vernichtungsprotokoll wurde angelegt.")});
   }
