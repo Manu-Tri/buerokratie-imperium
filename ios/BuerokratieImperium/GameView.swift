@@ -10,6 +10,7 @@ struct GameView: UIViewRepresentable {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
         config.userContentController.add(context.coordinator, name: "haptic")
+        config.userContentController.add(context.coordinator, name: "share")
         config.userContentController.addUserScript(
             WKUserScript(source: Self.bridge, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
         )
@@ -62,11 +63,28 @@ struct GameView: UIViewRepresentable {
         private let notify = UINotificationFeedbackGenerator()
 
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+            if message.name == "share", let text = message.body as? String {
+                share(text)
+                return
+            }
             switch message.body as? String {
             case "stamp": stamp.impactOccurred()
             case "success": notify.notificationOccurred(.success)
             default: tick.impactOccurred(intensity: 0.5)
             }
+        }
+
+        /// Öffnet das iOS-Teilen-Menü mit dem Amtsbericht.
+        private func share(_ text: String) {
+            let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+            guard var top = scene?.keyWindow?.rootViewController else { return }
+            while let presented = top.presentedViewController { top = presented }
+            let sheet = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+            if let pop = sheet.popoverPresentationController {
+                pop.sourceView = top.view
+                pop.sourceRect = CGRect(x: top.view.bounds.midX, y: top.view.bounds.maxY - 80, width: 0, height: 0)
+            }
+            top.present(sheet, animated: true)
         }
     }
 }
