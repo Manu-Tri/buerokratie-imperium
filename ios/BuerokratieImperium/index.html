@@ -2594,7 +2594,7 @@ function buildSurroundings(k){
 
 /* ================= Renderer, Szene ================= */
 let cv,renderer,camera,city;
-// Handys: weniger Pixel, einfachere Schatten, 30 Bilder pro Sekunde, weniger Deko
+// Handys: weniger Pixel, keine Schatten, 30 Bilder pro Sekunde, weniger Deko
 const LOW=(window.matchMedia&&matchMedia("(pointer:coarse)").matches)||/iPhone|iPad|iPod|Android/.test(navigator.userAgent);
 const SKY={day:["#6fa6d8","#e8eee6"],night:["#070d22","#28304a"]};
 function skyMesh(){const g=new THREE.SphereGeometry(1000,32,16),c=new Float32Array(g.attributes.position.count*3);g.setAttribute("color",new THREE.BufferAttribute(c,3));
@@ -2604,8 +2604,8 @@ function paintSky(m,top,hor){const p=m.geometry.attributes.position,c=m.geometry
 function makeScene(){
   const s=new THREE.Scene();const sky=skyMesh();paintSky(sky,...SKY.day);s.add(sky);
   const hemi=new THREE.HemisphereLight("#e4f0ff","#6f6a52",.65);s.add(hemi);
-  const sun=new THREE.DirectionalLight("#fff2d8",1.35);sun.position.set(90,150,70);sun.castShadow=true;sun.shadow.mapSize.set(LOW?1024:2048,LOW?1024:2048);
-  const sc=sun.shadow.camera;const se=LOW?92:125;sc.left=-se;sc.right=se;sc.top=se;sc.bottom=-se;sc.near=10;sc.far=420;sun.shadow.bias=-.0004;sun.shadow.normalBias=.35;
+  const sun=new THREE.DirectionalLight("#fff2d8",1.35);sun.position.set(90,150,70);sun.castShadow=!LOW;sun.shadow.mapSize.set(2048,2048);
+  const sc=sun.shadow.camera;sc.left=-125;sc.right=125;sc.top=125;sc.bottom=-125;sc.near=10;sc.far=420;sun.shadow.bias=-.0004;sun.shadow.normalBias=.35;
   s.add(sun,sun.target);s.fog=new THREE.Fog(SKY.day[1],LOW?220:260,LOW?640:820);
   return{s,sky,hemi,sun};
 }
@@ -2615,7 +2615,7 @@ function initRenderer(){
   renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!LOW||dpr<2,powerPreference:"high-performance",precision:LOW?"mediump":"highp"});
   renderer.setPixelRatio(Math.min(dpr,LOW?1.5:2));
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
-  renderer.shadowMap.enabled=true;renderer.shadowMap.type=LOW?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=!LOW;
+  renderer.shadowMap.enabled=!LOW;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   camera=new THREE.PerspectiveCamera(42,1,1,LOW?1400:2400);
   city=makeScene();
   const pm=new THREE.PMREMGenerator(renderer),es=new THREE.Scene(),sk=skyMesh();paintSky(sk,"#8ab8e6","#f4f2ea");es.add(sk);
@@ -2902,7 +2902,7 @@ function tagState(i){const own=S.owned[i]>0,bt=S.amtT[i];
   if(own)return["Stufe "+amtLevel(i),ACOL[i],"#ffffff"];
   return[i<=visibleMax()?"Im Bau":"Frei",darkMode?"#3b3c40":"#8b8b85","#ffffff"]}
 const tv={x:0,y:0,z:0};
-let acc=0,nShadow=0;
+let acc=0;
 function frame(dt){
   if(ready){const r=cv.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return}
   if(LOW&&ready){acc+=dt;if(acc<1/31)return;dt=Math.min(.1,acc);acc=0}
@@ -2921,7 +2921,6 @@ function frame(dt){
   WORLD_TICKS.forEach(f=>f(T,dt));plots.forEach(p=>p.ticks.forEach(f=>f(T,dt)));
   const sel=CITY.sel>=0?CITY.sel:0;ring.position.set(SLOTS[sel][0],.32,SLOTS[sel][1]);ring.material.color.set(ACOL[sel]);ring.scale.setScalar(1+Math.sin(T*3)*.03);
   city.sun.position.set(cam.tx+90,150,cam.tz+70);city.sun.target.position.set(cam.tx,0,cam.tz);
-  if(LOW&&++nShadow%6===1)renderer.shadowMap.needsUpdate=true;
   renderer.render(city.s,camera);
   const W=cv.clientWidth,Hh=cv.clientHeight,v=new THREE.Vector3();
   tags.forEach((t,i)=>{v.set(SLOTS[i][0],.25+plots[i].top+2,SLOTS[i][1]).project(camera);
