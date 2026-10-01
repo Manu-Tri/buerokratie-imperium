@@ -9,5 +9,6 @@ Auf dem Handy den Link öffnen und „Zum Home-Bildschirm“ wählen. Dann läuf
 ## Aufbau
 
 - `index.html` – das komplette Spiel
+- `three.min.js` – Three.js r128 für die 3D-Stadtansicht (lokal, damit das Spiel offline läuft)
 - `manifest.webmanifest`, `sw.js`, `icons/` – installierbare Web-App mit Offline-Betrieb
 - `ios/` – Xcode-Projekt für die native iPhone-App (`ios/sync-web.sh` übernimmt die aktuelle `index.html`)
