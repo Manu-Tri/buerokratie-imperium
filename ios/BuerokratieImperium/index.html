@@ -785,13 +785,13 @@ Object.assign(ICONS,{
 });
 const CITIES=[
  {n:"Amtshausen",t:"Dorf",mult:1,ico:"hut"},
- {n:"Stempelfeld",t:"Kleinstadt",mult:1.5,akten:1e5,lv:8,time:1200,cost:300,ico:"houses"},
- {n:"Formularbach",t:"Kreisstadt",mult:2.5,akten:5e6,lv:15,time:3600,cost:1500,ico:"rathaus"},
- {n:"Aktenburg",t:"Mittelstadt",mult:4,akten:2e8,lv:22,time:10800,cost:6000,ico:"burg"},
- {n:"Paragraphenstadt",t:"Großstadt",mult:7,akten:1e10,lv:30,time:21600,cost:25000,ico:"skyline"},
- {n:"Verordnungsheim",t:"Landeshauptstadt",mult:12,akten:5e11,lv:40,time:43200,cost:1e5,ico:"gen5"},
- {n:"Berlin",t:"Bundeshauptstadt",mult:20,akten:2.5e13,lv:55,time:86400,cost:4e5,ico:"reichstag"},
- {n:"Brüssel",t:"EU-Hauptstadt",mult:35,akten:1e15,lv:70,time:172800,cost:1.5e6,ico:"gen6"}
+ {n:"Stempelfeld",t:"Kleinstadt",mult:1.5,akten:1e5,lv:8,cost:300,ico:"houses"},
+ {n:"Formularbach",t:"Kreisstadt",mult:2.5,akten:5e6,lv:15,cost:1500,ico:"rathaus"},
+ {n:"Aktenburg",t:"Mittelstadt",mult:4,akten:2e8,lv:22,cost:6000,ico:"burg"},
+ {n:"Paragraphenstadt",t:"Großstadt",mult:7,akten:1e10,lv:30,cost:25000,ico:"skyline"},
+ {n:"Verordnungsheim",t:"Landeshauptstadt",mult:12,akten:5e11,lv:40,cost:1e5,ico:"gen5"},
+ {n:"Berlin",t:"Bundeshauptstadt",mult:20,akten:2.5e13,lv:55,cost:4e5,ico:"reichstag"},
+ {n:"Brüssel",t:"EU-Hauptstadt",mult:35,akten:1e15,lv:70,cost:1.5e6,ico:"gen6"}
 ];
 const CPOS=[[70,405],[190,372],[262,300],[150,252],[58,188],[170,140],[266,86],[150,36]];
 const cityMult=()=>CITIES[S.city].mult;
@@ -809,11 +809,10 @@ function giveUsd(r){
 }
 function cityReqs(k){
   const C=CITIES[k];if(!C||!C.cost)return[];
-  const live=k===S.city+1,now=Date.now();
+  const live=k===S.city+1;
   return[
     {n:"Akten seit Ankunft",have:live?S.cityTotal:0,need:C.akten,f:v=>fmt(v)},
     {n:"Gebäudestufen gesamt",have:live?amtSum():0,need:C.lv,f:v=>String(Math.floor(v))},
-    {n:"Mindestamtszeit",have:live?(now-S.cityStart)/1000:0,need:C.time,f:v=>fmtWait(v),left:live?fmtClock(C.time-(now-S.cityStart)/1000):""},
     {n:"Umzugskosten",have:live?S.usd:0,need:C.cost,f:v=>fmtUsd(v)}
   ];
 }
@@ -855,7 +854,7 @@ function renderKarte(){
   });
   const pp=CPOS[cur];
   const pin='<g transform="translate('+pp[0]+','+(pp[1]-19)+')"><g class="pin"><path d="M0,0 C-6,-8 -9,-11 -9,-16 A9,9 0 1,1 9,-16 C9,-11 6,-8 0,0Z"/><circle cy="-16" r="3.5" fill="#fff"/></g></g>';
-  const C=CITIES[mapSel],R=cityReqs(mapSel),st=mapSel<cur?"Bereits erledigt. Der Umzugskarton ist längst entsorgt.":mapSel===cur?"Aktueller Amtssitz.":mapSel===cur+1?"Nächstes Ziel. Alle vier Bedingungen müssen erfüllt sein.":"Erst erreichbar, wenn "+CITIES[mapSel-1].n+" erledigt ist.";
+  const C=CITIES[mapSel],R=cityReqs(mapSel),st=mapSel<cur?"Bereits erledigt. Der Umzugskarton ist längst entsorgt.":mapSel===cur?"Aktueller Amtssitz.":mapSel===cur+1?"Nächstes Ziel. Alle drei Bedingungen müssen erfüllt sein.":"Erst erreichbar, wenn "+CITIES[mapSel-1].n+" erledigt ist.";
   let card='<div class="card" style="--ac:'+(mapSel<=cur?'var(--green)':mapSel===cur+1?'#e5a823':'var(--line)')+'">'+icon(C.ico)+'<div class="info"><h3>'+C.n+' <span class="lvb">'+C.t+'</span></h3><p>'+st+'</p><div class="meta">Produktion dauerhaft x'+String(C.mult).replace(".",",")+'</div></div></div>';
   if(R.length){
     card+='<div class="stats reqs">'+R.map((r,k)=>'<div class="req"><div class="pl"><b>'+r.n+'</b><span id="rq'+k+'">'+(mapSel===cur+1?"":r.f(r.need))+'</span></div>'+(mapSel===cur+1?'<div class="bar"><i id="rqb'+k+'"></i></div>':'')+'</div>').join("")+'</div>';
